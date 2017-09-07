@@ -11,6 +11,8 @@ public class RTreeTraverse {
 		args = new String[] {"tree1"};
 		new RTreeTraverse(args);
 	}
+	
+	//test constructor function
 	RTreeTraverse(String[] args)
 	{
 		try
@@ -64,13 +66,6 @@ public class RTreeTraverse {
 			tree.secureRangeQuery(tree.rootID(),r,hashnode,hashdata,VO);
 			
 			// flush all pending changes to persistent storage (needed since Java might not call finalize when JVM exits).
-			//for (int t = 0; t < VO.size(); t++) {  
-	        //    System.out.println(VO.get(t));  
-	        //}
-			//System.out.println(VO.get(1));
-			//System.out.println();
-			//VO.set(0, "{");
-			//VO.set(VO.size()-1,"}");
 			VOreturn vo = RootHash(VO);
 			String []splitvo = vo.hash.split(" ");
 			System.out.println(splitvo[splitvo.length-1].equals(hashnode.get(""+tree.rootID())));
@@ -81,6 +76,8 @@ public class RTreeTraverse {
 			e.printStackTrace();
 		}
 	}
+	
+	//transform the String version MBR to double array version
 	public static double [] StringtoMBR(String str) {
 		String [] s = str.split(" ");
 		double []mbr = new double[4];
@@ -91,6 +88,7 @@ public class RTreeTraverse {
 		return mbr;
 	}
 	
+	//transform the double array MBR to String version
 	public static String MBRtoString(double [] MBR) {
 		String str= "";
 		str = str + String.valueOf(MBR[0])+" ";
@@ -109,6 +107,7 @@ public class RTreeTraverse {
 			return false;
 		}
 	}
+	//enlarge MBR by including MBR_c
 	public static double[] enLargeMBR(double[] MBR_c,double[] MBR){
 		if(MBR==null) {
 			MBR = new double[4];
@@ -129,11 +128,14 @@ public class RTreeTraverse {
 		
 		return MBR;
 	}
-
+	
+	//define a inner class to create return value of RootHash
 	public static class VOreturn{
 		public String hash="";
 		public double[] MBR=null;
 	}
+	
+	//transform a str:(MBR hash) to a VOreturn obj including MBR and hash
 	public static VOreturn transform(String str) {
 		VOreturn ret = new VOreturn();
 		str = str.substring(1,str.length()-1);
@@ -147,6 +149,8 @@ public class RTreeTraverse {
 		ret.MBR = MBR;
 		return ret;
 	}
+	
+	//verify the completeness and soundness of the result using VO
 	public static VOreturn RootHash(LinkedList<String> VO) {
 		String str = "";
 		double [] MBR = null;
