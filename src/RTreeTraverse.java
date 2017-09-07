@@ -4,11 +4,11 @@ import java.util.*;
 import spatialindex.spatialindex.*;
 import spatialindex.storagemanager.*;
 import spatialindex.rtree.*;
-
+import Tool.Hasher;
 public class RTreeTraverse {
 	public static void main(String[] args)
 	{
-		args = new String[] {"tree"};
+		args = new String[] {"tree1"};
 		new RTreeTraverse(args);
 	}
 	RTreeTraverse(String[] args)
@@ -47,24 +47,138 @@ public class RTreeTraverse {
 			HashMap<String, String> hashnode = new HashMap<String, String>();  
 			HashMap<String, String> hashdata = new HashMap<String, String>();  
 			tree.createHashTable(tree.rootID(), hashnode, hashdata);
-			//System.out.println(hashnode.size());
+			//System.out.println(hashnode.get(""+tree.rootID()));
 			double[] f1 = new double[2];
 			double[] f2 = new double[2];
 
-			f1[0] = 6; f1[1] = 6.5;
-			f2[0] = 9; f2[1] = 10;
+			//f1[0] = 4; f1[1] = 2.7;
+			//f2[0] = 7.5; f2[1] = 5;
+			
+			f1[0] = 0.219045; f1[1] = 0.0220734;
+			f2[0] = 0.467862; f2[1] = 0.528927;
 
 			Region r = new Region(f1, f2);
 			//System.out.print("intersect");
-			tree.intersectionQuery(r, vis);
-
+			//tree.intersectionQuery(r, vis);
+			LinkedList<String> VO = new LinkedList<String>();
+			tree.secureRangeQuery(tree.rootID(),r,hashnode,hashdata,VO);
+			
 			// flush all pending changes to persistent storage (needed since Java might not call finalize when JVM exits).
+			//for (int t = 0; t < VO.size(); t++) {  
+	        //    System.out.println(VO.get(t));  
+	        //}
+			//System.out.println(VO.get(1));
+			//System.out.println();
+			//VO.set(0, "{");
+			//VO.set(VO.size()-1,"}");
+			VOreturn vo = RootHash(VO);
+			String []splitvo = vo.hash.split(" ");
+			System.out.println(splitvo[splitvo.length-1].equals(hashnode.get(""+tree.rootID())));
 			tree.flush();
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
+	}
+	public static double [] StringtoMBR(String str) {
+		String [] s = str.split(" ");
+		double []mbr = new double[4];
+		mbr[0]=Double.valueOf(s[0]);
+		mbr[1]=Double.valueOf(s[1]);
+		mbr[2]=Double.valueOf(s[3]);
+		mbr[3]=Double.valueOf(s[4]);
+		return mbr;
+	}
+	
+	public static String MBRtoString(double [] MBR) {
+		String str= "";
+		str = str + String.valueOf(MBR[0])+" ";
+		str = str + String.valueOf(MBR[1])+" ";
+		str = str + ": ";
+		str = str + String.valueOf(MBR[2])+" ";
+		str = str + String.valueOf(MBR[3])+" ";
+		return str;
+	}
+	
+	public static boolean isPoint(double n1,double n2,double n3,double n4) {
+		if(n1==n3 && n2==n4) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	public static double[] enLargeMBR(double[] MBR_c,double[] MBR){
+		if(MBR==null) {
+			MBR = new double[4];
+			for(int i=0;i<4;i++) {
+				MBR[i]=MBR_c[i];
+			}
+		}
+		else {
+			if(MBR_c[0]<MBR[0])
+				MBR[0]=MBR_c[0];
+			if(MBR_c[1]<MBR[1])
+				MBR[1]=MBR_c[1];
+			if(MBR_c[2]>MBR[2])
+				MBR[2]=MBR_c[2];
+			if(MBR_c[3]>MBR[3])
+				MBR[3]=MBR_c[3];
+		}
+		
+		return MBR;
+	}
+
+	public static class VOreturn{
+		public String hash="";
+		public double[] MBR=null;
+	}
+	public static VOreturn transform(String str) {
+		VOreturn ret = new VOreturn();
+		str = str.substring(1,str.length()-1);
+		String [] result = str.split(" ");
+		ret.hash = result[5];
+		double[] MBR = new double[4];
+		MBR[0] = Double.valueOf(result[0]);
+		MBR[1] = Double.valueOf(result[1]);
+		MBR[2] = Double.valueOf(result[3]);
+		MBR[3] = Double.valueOf(result[4]);
+		ret.MBR = MBR;
+		return ret;
+	}
+	public static VOreturn RootHash(LinkedList<String> VO) {
+		String str = "";
+		double [] MBR = null;
+		VOreturn ret = new VOreturn();
+		while(!VO.isEmpty()) {
+			String f = VO.poll();
+			if(f.charAt(0)>='0' && f.charAt(0)<='9') {
+				str = str + new Hasher().stringMD5(f);
+				double [] MBR_c = StringtoMBR(f);
+				MBR = enLargeMBR(MBR_c,MBR);
+			}
+			if(f.charAt(0)=='(') {
+				VOreturn n = transform(f);
+				MBR  = enLargeMBR(n.MBR,MBR);
+				str = str + MBRtoString(n.MBR)+ n.hash;
+				//System.out.println(str);
+			}
+			if(f == "[") {
+				ret = RootHash(VO);
+				MBR = enLargeMBR(ret.MBR,MBR);
+				str = str + MBRtoString(ret.MBR)+ret.hash;
+				//System.out.println(str);
+			}
+			if(f == "]") {
+				ret.hash = new Hasher().stringMD5(str);
+				ret.MBR=MBR;
+				return ret;
+			}
+		}
+		ret.hash =str;
+		ret.MBR=MBR;
+		return ret;
 	}
 
 	// example of a Visitor pattern.

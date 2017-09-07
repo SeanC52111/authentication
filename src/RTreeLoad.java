@@ -11,7 +11,7 @@ public class RTreeLoad
 {
 	public static void main(String[] args)
 	{
-		args = new String[] {"data", "tree","4", "10NN"};
+		args = new String[] {"data1", "tree1","20", "10NN"};
 		new RTreeLoad(args);
 	}
 	
@@ -63,7 +63,7 @@ public class RTreeLoad
 			// the StorageManager and the RSTAR splitting policy.
 			PropertySet ps2 = new PropertySet();
 
-			Double f = new Double(0.7);
+			Double f = new Double(0.6);
 			ps2.setProperty("FillFactor", f);
 
 			i = new Integer(args[2]);

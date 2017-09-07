@@ -2,6 +2,8 @@ package Tool;
 
 
 import java.security.MessageDigest;
+import java.util.*;
+
 
 public class Hasher {
 	public  String byteArrayToHex(byte[] byteArray) {
@@ -16,7 +18,7 @@ public class Hasher {
 	}
     public  String stringMD5(String input) {  
     	   try {  
-    	      MessageDigest messageDigest =MessageDigest.getInstance("MD5");      	  
+    	      MessageDigest messageDigest =MessageDigest.getInstance("SHA-256");      	  
 
     	      byte[] inputByteArray = input.getBytes();  
 
@@ -29,6 +31,7 @@ public class Hasher {
     	  }  
     	  
     }
+    
     public static void main(String args[]) {
     	String str = new String("Hello World!");
     	String md5str = new Hasher().stringMD5(str);

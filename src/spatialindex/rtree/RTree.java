@@ -194,30 +194,69 @@ public class RTree implements ISpatialIndex
 		String h = "";
 		if (n.m_level == 0)
 		{
+			
 			for (int cChild = 0; cChild < n.m_children; cChild++)
 			{
 				//Data data = new Data(n.m_pData[cChild], n.m_pMBR[cChild], n.m_pIdentifier[cChild]);
 				String temphash = md5.stringMD5(n.m_pMBR[cChild].toString());
-				//System.out.println("data hash"+temphash);
+				//System.out.println("data hash "+temphash);
+				System.out.println(n.m_pIdentifier[cChild]+" "+n.m_pMBR[cChild].toString());
 				h = h + temphash;
 				hashdata.put(""+n.m_pIdentifier[cChild], temphash);
 			}
-			String leafhash = md5.stringMD5(h);
-			//System.out.println("leaf hash"+leafhash);
-			hashnode.put(""+n.m_identifier, leafhash);
+			h = md5.stringMD5(h);
+			System.out.println("leaf node"+" "+n.getShape()+h);
+			hashnode.put(""+n.m_identifier, h);
 		}
 		else
 		{
 			for (int cChild = 0; cChild < n.m_children; cChild++)
 			{
-				String subhash = n.m_pMBR[cChild].toString()+md5.stringMD5(createHashTable(n.m_pIdentifier[cChild],hashnode,hashdata));
+				String subhash = n.m_pMBR[cChild].toString()+createHashTable(n.m_pIdentifier[cChild],hashnode,hashdata);
 				h = h + subhash;
 			}
-			//System.out.println(h);
+			System.out.println(h);
 			h = md5.stringMD5(h);
+			System.out.println("internal node"+n.m_identifier + " "+n.getShape()+h);
 			hashnode.put(""+n.m_identifier, h);
 		}
 		return h;
+	}
+	
+	public void secureRangeQuery(int i, final IShape query,HashMap<String, String> hashnode,HashMap<String, String> hashdata,LinkedList<String> VO)
+	{
+		VO.add("[");
+		Node n = readNode(i);
+		if (n.m_level == 0)
+		{
+			for (int cChild = 0; cChild < n.m_children; cChild++)
+			{
+				boolean b;
+				b = query.intersects(n.m_pMBR[cChild]);
+				VO.add(n.m_pMBR[cChild].toString());
+				if (b)
+				{
+					//Data data = new Data(n.m_pData[cChild], n.m_pMBR[cChild], n.m_pIdentifier[cChild]);
+					//System.out.println("result:"+n.m_pIdentifier[cChild]);					
+				}
+				
+			}
+		}
+		else
+		{
+			for (int cChild = 0; cChild < n.m_children; cChild++)
+			{
+				if (query.intersects(n.m_pMBR[cChild]))
+				{
+					secureRangeQuery(n.m_pIdentifier[cChild],query,hashnode,hashdata,VO);
+				}
+				else
+				{
+					VO.add("("+n.m_pMBR[cChild].toString()+hashnode.get(""+n.m_pIdentifier[cChild])+")");
+				}
+			}
+		}
+		VO.add("]");
 	}
 	
 	
