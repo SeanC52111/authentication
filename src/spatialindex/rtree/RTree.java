@@ -290,7 +290,7 @@ public class RTree implements ISpatialIndex
 	{
 		if (query.getDimension() != m_dimension) throw new IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 		Node n = readNode(m_rootID);
-
+		//add the root entry with nearest distance
 		VO.add(new NNEntry(n,0.0));
 
 		
@@ -313,11 +313,13 @@ public class RTree implements ISpatialIndex
 					}
 				}
 			}
+			//t is the closest entry
 			t = (NNEntry)VO.get(minindex);
 			if(t.m_pEntry instanceof Node) {
 				VO.remove(minindex);
 				n = (Node)t.m_pEntry;
 				VO.add(minindex,"[");
+				//expand the children of t and add them to the linkedlist VO
 				for (int cChild = 0; cChild < n.m_children; cChild++) {
 					IEntry e;
 					if(n.m_level != 0)
@@ -333,6 +335,7 @@ public class RTree implements ISpatialIndex
 				}
 				VO.add(minindex+n.m_children+1,"]");
 			}
+			//the entry is a point not a node!
 			else {
 				t.m_minDist = 10000000;
 				Data d = (Data)t.m_pEntry;
@@ -341,7 +344,7 @@ public class RTree implements ISpatialIndex
 				knearest = t.m_minDist;
 			}
 		}
-		
+		//transform all of the non-string entry to String format in VO
 		for(int it=0;it<VO.size();it++) {
 			Object item = VO.get(it);
 			if(item instanceof NNEntry)
@@ -350,11 +353,11 @@ public class RTree implements ISpatialIndex
 				NNEntry entry = (NNEntry)item;
 				if(entry.m_pEntry instanceof Node) {
 					Node node = (Node)entry.m_pEntry;
-					VO.add(it,"("+node.getShape().toString()+hashnode.get(""+node.m_identifier)+")");
+					VO.add(it,"("+node.getShape().toString()+hashnode.get(""+node.m_identifier)+")");//non expanded internal node
 				}
 				else {
 					Data data = (Data)entry.m_pEntry;
-					VO.add(it,data.getShape().toString());
+					VO.add(it,data.getShape().toString());//data points in expanded node
 				}
 			}
 		}
