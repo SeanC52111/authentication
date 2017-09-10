@@ -8,7 +8,7 @@ import Tool.Hasher;
 public class RTreeTraverse {
 	public static void main(String[] args)
 	{
-		args = new String[] {"tree1"};
+		args = new String[] {"tree2"};
 		new RTreeTraverse(args);
 	}
 	
@@ -48,27 +48,43 @@ public class RTreeTraverse {
 			//tree.tranverse(vis);
 			HashMap<String, String> hashnode = new HashMap<String, String>();  
 			HashMap<String, String> hashdata = new HashMap<String, String>();  
-			tree.createHashTable(tree.rootID(), hashnode, hashdata);
+			System.out.println("createhashtable:"+tree.createHashTable(tree.rootID(), hashnode, hashdata));
 			//System.out.println(hashnode.get(""+tree.rootID()));
 			double[] f1 = new double[2];
 			double[] f2 = new double[2];
 
-			//f1[0] = 4; f1[1] = 2.7;
-			//f2[0] = 7.5; f2[1] = 5;
+			f1[0] = 4; f1[1] = 2.7;
+			f2[0] = 7.5; f2[1] = 5;
 			
-			f1[0] = 0.219045; f1[1] = 0.0220734;
-			f2[0] = 0.467862; f2[1] = 0.528927;
+			//f1[0] = 0.219045; f1[1] = 0.0220734;
+			//f2[0] = 0.467862; f2[1] = 0.528927;
 
-			Region r = new Region(f1, f2);
+			//Region r = new Region(f1, f2);
 			//System.out.print("intersect");
 			//tree.intersectionQuery(r, vis);
-			LinkedList<String> VO = new LinkedList<String>();
-			tree.secureRangeQuery(tree.rootID(),r,hashnode,hashdata,VO);
-			
+			LinkedList VO = new LinkedList<String>();
+			//tree.secureRangeQuery(tree.rootID(),r,hashnode,hashdata,VO);
+			double[] f3 = new double[2];
+			f3[0] = 3; f3[1] = 1;
+			Point p = new Point(f3);
+			Circle circle = new Circle(p,2);
+			//tree.secureRangeQuery(tree.rootID(),circle,hashnode,hashdata,VO);
+			tree.securenearestNeighborQuery(1,p,hashnode,hashdata,VO);
+			for(int it=0;it<VO.size();it++)
+			{
+				System.out.println(VO.get(it));
+			}
+			//tree.nearestNeighborQuery(1, p, vis);
 			// flush all pending changes to persistent storage (needed since Java might not call finalize when JVM exits).
 			VOreturn vo = RootHash(VO);
 			String []splitvo = vo.hash.split(" ");
 			System.out.println(splitvo[splitvo.length-1].equals(hashnode.get(""+tree.rootID())));
+			//System.out.println(splitvo[splitvo.length-1]);
+			//double[] f3 = new double[2];
+			//f3[0] = 7; f3[1] = 1;
+			//Point p = new Point(f3);
+			//tree.nearestNeighborQuery(2, p, vis);
+			
 			tree.flush();
 		}
 		catch (Exception e)

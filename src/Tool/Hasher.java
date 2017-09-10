@@ -36,5 +36,7 @@ public class Hasher {
     	String str = new String("Hello World!");
     	String md5str = new Hasher().stringMD5(str);
     	System.out.println(md5str);
+    	System.out.println("32323"=="32323");
+    	
     }
 }

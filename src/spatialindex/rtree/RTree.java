@@ -200,12 +200,12 @@ public class RTree implements ISpatialIndex
 				//Data data = new Data(n.m_pData[cChild], n.m_pMBR[cChild], n.m_pIdentifier[cChild]);
 				String temphash = md5.stringMD5(n.m_pMBR[cChild].toString());
 				//System.out.println("data hash "+temphash);
-				System.out.println(n.m_pIdentifier[cChild]+" "+n.m_pMBR[cChild].toString());
+				//System.out.println(n.m_pIdentifier[cChild]+" "+n.m_pMBR[cChild].toString());
 				h = h + temphash;
 				hashdata.put(""+n.m_pIdentifier[cChild], temphash);
 			}
 			h = md5.stringMD5(h);
-			System.out.println("leaf node"+" "+n.getShape()+h);
+			//System.out.println("leaf node"+" "+n.getShape()+h);
 			hashnode.put(""+n.m_identifier, h);
 		}
 		else
@@ -215,9 +215,9 @@ public class RTree implements ISpatialIndex
 				String subhash = n.m_pMBR[cChild].toString()+createHashTable(n.m_pIdentifier[cChild],hashnode,hashdata);
 				h = h + subhash;
 			}
-			System.out.println(h);
+			//System.out.println(h);
 			h = md5.stringMD5(h);
-			System.out.println("internal node"+n.m_identifier + " "+n.getShape()+h);
+			//System.out.println("internal node"+n.m_identifier + " "+n.getShape()+h);
 			hashnode.put(""+n.m_identifier, h);
 		}
 		return h;
@@ -237,7 +237,7 @@ public class RTree implements ISpatialIndex
 				if (b)
 				{
 					//Data data = new Data(n.m_pData[cChild], n.m_pMBR[cChild], n.m_pIdentifier[cChild]);
-					//System.out.println("result:"+n.m_pIdentifier[cChild]);					
+					System.out.println("result:"+n.m_pIdentifier[cChild]);					
 				}
 				
 			}
@@ -258,8 +258,109 @@ public class RTree implements ISpatialIndex
 		}
 		VO.add("]");
 	}
-	
-	
+	public double getminimumdistance(IShape query,String s) {
+		if(s.charAt(0)=='(') {
+			s = s.substring(1,s.length()-1);
+		}
+		String []a = s.split(" ");
+		double m1 = Double.valueOf(a[0]);
+		double m2 = Double.valueOf(a[1]);
+		double m3 = Double.valueOf(a[3]);
+		double m4 = Double.valueOf(a[4]);
+		if(m1==m3 && m2==m4)
+		{
+			double[] f3 = new double[2];
+			f3[0] = m1; f3[1] = m2;
+			Point p = new Point(f3);
+			return query.getMinimumDistance(p);
+		}
+		else
+		{
+			double[] f1 = new double[2];
+			double[] f2 = new double[2];
+
+			f1[0] = m1; f1[1] = m2;
+			f2[0] = m3; f2[1] = m4;
+
+			Region r = new Region(f1, f2);
+			return query.getMinimumDistance(r);
+		}
+	}
+	public void securenearestNeighborQuery(int k, final IShape query,HashMap<String, String> hashnode,HashMap<String, String> hashdata,LinkedList VO)
+	{
+		if (query.getDimension() != m_dimension) throw new IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+		Node n = readNode(m_rootID);
+
+		VO.add(new NNEntry(n,0.0));
+
+		
+		int minindex = 0;
+		int counter = 0;
+		double knearest = 0.0;
+		while(counter<k) {
+			double min = 9999999;
+			//first find the nearest distance and index
+			NNEntry t = null;
+			for(int i=0;i<VO.size();i++) {
+				Object item = VO.get(i);
+				if(!(item instanceof String))
+				{
+					t = (NNEntry)item;
+					double mindis = t.m_minDist;
+					if(mindis < min) {
+						min = mindis;
+						minindex = i;
+					}
+				}
+			}
+			t = (NNEntry)VO.get(minindex);
+			if(t.m_pEntry instanceof Node) {
+				VO.remove(minindex);
+				n = (Node)t.m_pEntry;
+				VO.add(minindex,"[");
+				for (int cChild = 0; cChild < n.m_children; cChild++) {
+					IEntry e;
+					if(n.m_level != 0)
+					{
+						e = readNode(n.m_pIdentifier[cChild]);
+					}
+					else
+					{
+						e = new Data(n.m_pData[cChild], n.m_pMBR[cChild], n.m_pIdentifier[cChild]);
+					}
+					NNEntry e2 = new NNEntry(e,query.getMinimumDistance(e.getShape()));
+					VO.add(minindex+cChild+1,e2);
+				}
+				VO.add(minindex+n.m_children+1,"]");
+			}
+			else {
+				t.m_minDist = 10000000;
+				Data d = (Data)t.m_pEntry;
+				System.out.println(d.getIdentifier());
+				counter++;
+				knearest = t.m_minDist;
+			}
+		}
+		
+		for(int it=0;it<VO.size();it++) {
+			Object item = VO.get(it);
+			if(item instanceof NNEntry)
+			{
+				VO.remove(it);
+				NNEntry entry = (NNEntry)item;
+				if(entry.m_pEntry instanceof Node) {
+					Node node = (Node)entry.m_pEntry;
+					VO.add(it,"("+node.getShape().toString()+hashnode.get(""+node.m_identifier)+")");
+				}
+				else {
+					Data data = (Data)entry.m_pEntry;
+					VO.add(it,data.getShape().toString());
+				}
+			}
+		}
+		
+		
+	}
 	public void insertData(final byte[] data, final IShape shape, int id)
 	{
 		if (shape.getDimension() != m_dimension) throw new IllegalArgumentException("insertData: Shape has the wrong number of dimensions.");
